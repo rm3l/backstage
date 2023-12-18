@@ -1,0 +1,58 @@
+schemaVersion: 2.2.0
+metadata:
+  name: my-backstage
+
+commands:
+  - id: install-yarn
+    exec:
+      commandLine: npm install -g yarn
+      workingDir: ${PROJECT_SOURCE}
+      component: nodejs
+
+  - id: yarn-install
+    exec:
+      commandLine: npx yarn install
+      component: nodejs
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: build
+        isDefault: true
+    
+  - id: run-start
+    exec:
+      commandLine: npx yarn run start
+      component: nodejs
+      workingDir: ${PROJECT_SOURCE}
+      group:
+        kind: run
+        isDefault: true
+    
+components:
+  - name: nodejs
+    container:
+      image: registry.access.redhat.com/ubi9/nodejs-18:latest
+      sourceMapping: /projects
+      command: ['tail', '-f', '/dev/null']
+      memoryLimit: 2Gi
+      # workaround for https://github.com/redhat-developer/odo/issues/6836
+      volumeMounts:
+        - name: node-modules
+          path: /projects/node_modules
+      endpoints:
+        - name: frontend
+          targetPort: 3000
+          exposure: public
+        - name: backend
+          targetPort: 7007
+          exposure: public
+  
+  - name: node-modules
+    volume:
+      size: 3Gi
+      
+      
+
+      
+events:
+  postStart:
+    - install-yarn
